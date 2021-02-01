@@ -1,0 +1,17 @@
+#!/bin/bash
+#PBS -k o
+#PBS -l nodes=1:ppn=1:gpus=1,walltime=12:00:00
+#PBS -N spatial_dag_desk_foreground
+#PBS -M dpshah2@illinois.edu
+#PBS -m abe
+
+cd projects.link/devansh/AML_Project/3D-R2N2
+source ~/.bashrc
+source activate py3-theano
+
+python demo.py --source desk --target car --border_weight 10 --background 0 --tau 0.1 --alpha_flow 10 --alpha_inp 0.0001 --lb 20 --tv_weight 1 > log_desk_car_false.txt
+python demo.py --source desk --target chair --border_weight 10 --background 0 --tau 0.1 --alpha_flow 10 --alpha_inp 0.0001 --lb 20 --tv_weight 1 > log_desk_chair_false.txt
+python demo.py --source desk --target tab --border_weight 10 --background 0 --tau 0.1 --alpha_flow 10 --alpha_inp 0.0001 --lb 20 --tv_weight 1 > log_desk_tab_false.txt
+python demo.py --source desk --target mail --border_weight 10 --background 0 --tau 0.1 --alpha_flow 10 --alpha_inp 0.0001 --lb 20 --tv_weight 1 > log_desk_mail_false.txt
+python demo.py --source desk --target ones --border_weight 10 --background 0 --tau 0.1 --alpha_flow 10 --alpha_inp 0.0001 --lb 20 --tv_weight 1 > log_desk_ones_false.txt
+python demo.py --source desk --target case --border_weight 10 --background 0 --tau 0.1 --alpha_flow 10 --alpha_inp 0.0001 --lb 20 --tv_weight 1 > log_desk_case_false.txt
