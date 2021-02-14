@@ -230,9 +230,9 @@ def test_net(cfg,
 
     source_imgs = np.vstack(source_imgs)
     source_imgs = torch.tensor(source_imgs, device=device).float()
-    source_imgs = Variable(source_imgs, requires_grad=True) #The source images which we will perturb
+    source_imgs = Variable(source_imgs, requires_grad=True) #The source images which we will perturb between 0-1
 
-    clean_imgs = source_imgs.clone().detach() #Benign images
+    clean_imgs = source_imgs.clone().detach() #Benign images 0-1
 
     assert (len(sources) == len(targets))
     # Set up networks
@@ -300,6 +300,7 @@ def test_net(cfg,
     # Test the encoder, decoder and merger
 
     grad_inp_t = torch.zeros(source_imgs.shape, device=device)
+
     source_imgs_collate = source_imgs.view(source_imgs.shape[0] * source_imgs.shape[1], source_imgs.shape[2],
                                            source_imgs.shape[3], source_imgs.shape[4])
 
@@ -340,17 +341,14 @@ def test_net(cfg,
             # Spatial transform => given image and optical flow, gives the spatially transformed image
             grid_new = grid + f
             grid_new = grid_new.clamp(min=-1, max=1)
-
             source_imgs_collate = source_imgs.view(source_imgs.shape[0] * source_imgs.shape[1], source_imgs.shape[2],
                                                    source_imgs.shape[3], source_imgs.shape[4])
             x_new = F.grid_sample(source_imgs_collate, grid_new, mode='bilinear', align_corners=True)
             x_new = x_new.view(source_imgs.shape[0], source_imgs.shape[1], source_imgs.shape[2],
                                source_imgs.shape[3], source_imgs.shape[4])
-            import pdb; pdb.set_trace()
-            normalized_imgs_inp = (x_new - cfg.DATASET.MEAN[0]) / cfg.DATASET.STD[0]
 
             #Forward pass through encoder,decoder,merger
-            image_features = encoder(normalized_imgs_inp)
+            image_features = encoder(x_new)
 
             # image_features = encoder(rendering_images)
             raw_features, generated_volume = decoder(image_features)
@@ -381,7 +379,7 @@ def test_net(cfg,
         total_loss.backward()
         optim_.step()
 
-        source_imgs.data.clamp(0, 1.0)
+        source_imgs.data.clamp(-1.0, 1.0)
         source_imgs.data = torch.clamp(source_imgs.data - pgd_max.data, max=0) + pgd_max.data
         source_imgs.data = torch.clamp(source_imgs.data - pgd_min.data, min=0) + pgd_min.data
         f.data = torch.clamp(f.data-f_max.data, max=0) + f_max.data
@@ -410,12 +408,12 @@ def test_net(cfg,
             for param in optim_.param_groups:
                 print("PARAM LR", param['lr'])
             x_adv = source_imgs.data.cpu().numpy()
-            # x_adv *= cfg.DATASET.STD[0]
-            # x_adv += cfg.DATASET.MEAN[0]
+            x_adv *= cfg.DATASET.STD[0]
+            x_adv += cfg.DATASET.MEAN[0]
 
             x_save = x_new.data.cpu().numpy()
-            # x_save *= cfg.DATASET.STD[0]
-            # x_save += cfg.DATASET.MEAN[0]
+            x_save *= cfg.DATASET.STD[0]
+            x_save += cfg.DATASET.MEAN[0]
 
             for index in range(len(sources)):
                 # directory = args.attack_type + '/' + sources[index] + '_' + targets[index] + '/'
