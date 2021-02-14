@@ -179,7 +179,6 @@ def test_net(cfg,
              sources=None,
              targets=None,
              weight=10,
-             refiner=None,
              args=None):
     # Enable the inbuilt cudnn auto-tuner to find the best algorithm to use
     torch.backends.cudnn.benchmark = True
@@ -268,7 +267,6 @@ def test_net(cfg,
     # Switch models to evaluation mode
     encoder.eval()
     decoder.eval()
-    refiner.eval()
     merger.eval()
 
     target_imgs = []
@@ -289,9 +287,6 @@ def test_net(cfg,
         target_generated_volume = merger(target_raw_features, target_generated_volume)
     else:
         target_generated_volume = torch.mean(target_generated_volume, dim=1)
-
-    if cfg.NETWORK.USE_REFINER and epoch_idx >= cfg.TRAIN.EPOCH_START_USE_REFINER:
-        target_generated_volume = refiner(target_generated_volume)
 
     ground_truth_volume = target_generated_volume.detach()
     _target = torch.ge(ground_truth_volume, threshold)
@@ -352,7 +347,7 @@ def test_net(cfg,
             x_new = x_new.view(source_imgs.shape[0], source_imgs.shape[1], source_imgs.shape[2],
                                source_imgs.shape[3], source_imgs.shape[4])
 
-            #Forward pass through encoder,decoder,merger, refiner
+            #Forward pass through encoder,decoder,merger
             image_features = encoder(x_new)
 
             # image_features = encoder(rendering_images)
@@ -369,29 +364,17 @@ def test_net(cfg,
             mask = active_targets * 1.0 * boundary_mask
             # encoder_loss = bce_loss(generated_volume * mask, ground_truth_volume * mask) * 10 * weight
 
-            #Optimization losses : encoder_loss, refiner_loss
+            #Optimization losses : encoder_loss
             encoder_loss = torch.mean(-(
                     ground_truth_volume * torch.log(generated_volume + 1e-9) + (1 - ground_truth_volume) * torch.log(
                 1 - generated_volume + 1e-9)) * mask) * 10
-            if cfg.NETWORK.USE_REFINER and epoch_idx >= cfg.TRAIN.EPOCH_START_USE_REFINER:
-                generated_volume = refiner(generated_volume)
-            else:
-                refiner_loss = encoder_loss
 
-            _volume = torch.ge(generated_volume, threshold)
-            active_targets = _volume ^ _target
-            # print('iter: ', iter_, 'active target length: ', active_targets.sum())
-            mask = active_targets * 1.0 * boundary_mask
-            # refiner_loss = bce_loss(generated_volume * mask, ground_truth_volume * mask) * 10 * weight
-            refiner_loss = torch.mean(-(
-                    ground_truth_volume * torch.log(generated_volume + 1e-9) + (1 - ground_truth_volume) * torch.log(
-                1 - generated_volume + 1e-9)) * mask) * 10
             l2_loss = mse_loss(clean_imgs, source_imgs)
             linf_loss = torch.max(clean_imgs - source_imgs)
             flow_regularization_loss = loss_flow(f)
             # print(iter_, active_targets.data.sum(), encoder_loss.data, refiner_loss.data, l2_loss.data, '{0:.10f}'.format(flow_regularization_loss.data), linf_loss.data, flush=True)
             #Eventual optimization loss function
-            total_loss = 0.5 * (encoder_loss + refiner_loss) + tau * flow_regularization_loss
+            total_loss = encoder_loss + tau * flow_regularization_loss
 
         total_loss.backward()
         optim_.step()
