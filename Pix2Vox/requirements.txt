@@ -1,7 +1,0 @@
-argparse
-easydict
-matplotlib
-numpy
-scipy
-torchvision
-tensorboardX
