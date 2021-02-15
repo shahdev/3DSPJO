@@ -346,7 +346,6 @@ def test_net(cfg,
             x_new = F.grid_sample(source_imgs_collate, grid_new, mode='bilinear', align_corners=True)
             x_new = x_new.view(source_imgs.shape[0], source_imgs.shape[1], source_imgs.shape[2],
                                source_imgs.shape[3], source_imgs.shape[4])
-            import pdb; pdb.set_trace()
             normalized_imgs_inp = (x_new - cfg.DATASET.MEAN[0]) / cfg.DATASET.STD[0]
 
             #Forward pass through encoder,decoder,merger

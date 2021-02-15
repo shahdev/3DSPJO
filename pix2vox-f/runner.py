@@ -44,7 +44,7 @@ def get_args_from_command_line():
     parser.add_argument("--alpha_inp", default=0.0, type=float, help="step size for input")
     parser.add_argument("--alpha_flow", type=float, default=0.0, help="step size for flow")
     parser.add_argument("--tau", type=float, default=0.0, help="tau for flow")
-    parser.add_argument("--attack_epsilon", type=int, help="Linf ball for perturbation")  # [0-255]
+    parser.add_argument("--attack_epsilon", type=float, help="Linf ball for perturbation")  # [0-255]
     parser.add_argument("--attack_type", type=str, help="type of attack", choices=['spatial_dag', 'dag', 'spatial'])
     parser.add_argument("--foreground_only", type=int, help="foreground/background attack", default=0)
     args = parser.parse_args()
@@ -71,7 +71,9 @@ def main():
     # Set GPU to use
     if type(cfg.CONST.DEVICE) == str:
         os.environ["CUDA_VISIBLE_DEVICES"] = cfg.CONST.DEVICE
-
+    
+    all_sources = [args.source]
+    all_targets = [args.target]
     source_list = []
     target_list = []
     for source in all_sources:
