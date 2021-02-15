@@ -37,9 +37,9 @@ def get_args_from_command_line():
     parser.add_argument('--weights', dest='weights', help='Initialize network from the weights file',
                         default='Pix2Vox-F-ShapeNet.pth')
     parser.add_argument('--out', dest='out_path', help='Set output path', default=cfg.DIR.OUT_PATH)
-    parser.add_argument('--source', dest='source', help='Set output path', default='chair')
-    parser.add_argument('--target', dest='target', help='Set output path', default='ones')
     parser.add_argument('--weight', dest='weight', help='Set output path', default=10, type=int)
+    parser.add_argument('--source', type=str, nargs='+')
+    parser.add_argument('--target', type=str, nargs='+')
 
     parser.add_argument("--alpha_inp", default=0.0, type=float, help="step size for input")
     parser.add_argument("--alpha_flow", type=float, default=0.0, help="step size for flow")
@@ -72,8 +72,8 @@ def main():
     if type(cfg.CONST.DEVICE) == str:
         os.environ["CUDA_VISIBLE_DEVICES"] = cfg.CONST.DEVICE
     
-    all_sources = [args.source]
-    all_targets = [args.target]
+    all_sources = args.source
+    all_targets = args.target
     source_list = []
     target_list = []
     for source in all_sources:
