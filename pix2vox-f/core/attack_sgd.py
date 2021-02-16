@@ -185,8 +185,8 @@ def test_net(cfg,
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(device)
     source_imgs = []
-    sources = sources[:10]
-    targets = targets[:10]
+    #sources = sources[:10]
+    #targets = targets[:10]
 
     # alpha_inp = 0.0020
     alpha_inp = 0.010
