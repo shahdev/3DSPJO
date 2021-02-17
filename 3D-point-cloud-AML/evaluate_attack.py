@@ -287,13 +287,12 @@ with tf.device("/gpu:0"):
 	loss_mask = graph.cross_entropy_loss(newMaskLogit, maskGT) / (opt.batchSize * opt.novelN)
 	loss_flow = flow_loss(flow)
 
-	loss = loss_mask + opt.lambdaDepth * loss_depth + tau * loss_flow
+	loss = loss_mask + opt.lambdaDepth * loss_depth 
 
 	grad_inp = tf.gradients(loss_mask, inputImage)[0] + opt.lambdaDepth * tf.gradients(loss_depth, inputImage)[0]
 
 	grad_flow = tf.gradients(loss_mask, flow)[0] \
-								+ opt.lambdaDepth * tf.gradients(loss_depth, flow)[0] \
-								+ tau * tf.gradients(loss_flow, flow)[0]
+								+ opt.lambdaDepth * tf.gradients(loss_depth, flow)[0]								
 
 	# grad_inp = tf.clip_by_norm(tf.gradients(loss_mask, inputImage)[0] + opt.lambdaDepth * tf.gradients(loss_depth, inputImage)[0], clip_norm=1.0)
 	#
@@ -382,11 +381,11 @@ def attack(sess):
 
 		print(iter_, l, lm, ld, lf, "pred2GT:", pred2GT, "GT2pred:", GT2pred, flush=True)
 		if iter_ == 0:
-			grad_inp_t = l_grad/LA.norm(l_grad)
-			grad_flow_t = l_flow_grad/LA.norm(l_flow_grad)
+			grad_inp_t = l_grad
+			grad_flow_t = l_flow_grad
 		else:
-			grad_inp_t = mu * grad_inp_t + (1 - mu) * l_grad/LA.norm(l_grad)
-			grad_flow_t = mu * grad_flow_t + (1 - mu) * l_flow_grad/LA.norm(l_flow_grad)
+			grad_inp_t = mu * grad_inp_t + (1 - mu) * l_grad
+			grad_flow_t = mu * grad_flow_t + (1 - mu) * l_flow_grad
 
 		if opt.attack_type == 'spatial_dag':
 			if iter_ % 2 == 0:
