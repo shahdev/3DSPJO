@@ -81,7 +81,8 @@ def main(args):
 
     target_imgs = load_images(args.target)
     target,_ = solver.test_output(target_imgs, flow=flow)
-
+    #target = np.zeros((cfg.CONST.BATCH_SIZE, 32, 2, 32, 32)).astype(theano.config.floatX)
+    #target[:, :, 1, :, :] = 1
     if not os.path.exists('targets'):
         os.makedirs('targets')
     voxel2obj('targets/' + args.target + '.obj', target[0, :, 1, :, :] > cfg.TEST.VOXEL_THRESH)
