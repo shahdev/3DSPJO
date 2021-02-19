@@ -24,7 +24,7 @@ def save_image(img, file_name):
 		sub.imshow(np.transpose(img[i, 0, :, :, :], (1, 2, 0)), interpolation='nearest')
 		fig.savefig(file_name)
 	plt.close()
-        gc.collect()
+	gc.collect()
 
 def get_foreground(imgs):
 	foreground_mask = (imgs < 0.99)
