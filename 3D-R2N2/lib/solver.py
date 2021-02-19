@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from numpy import linalg as LA
 
 from lib.voxel import voxel2obj
-
+import gc
 
 def max_or_nan(params):
 	for param_idx, param in enumerate(params):
@@ -24,7 +24,7 @@ def save_image(img, file_name):
 		sub.imshow(np.transpose(img[i, 0, :, :, :], (1, 2, 0)), interpolation='nearest')
 		fig.savefig(file_name)
 	plt.close()
-
+        gc.collect()
 
 def get_foreground(imgs):
 	foreground_mask = (imgs < 0.99)
@@ -312,7 +312,7 @@ class Solver(object):
 			print("flow data max min: %f, %f" % (np.max(flow), np.min(flow)))
 			print("noise perturbation max: %f" % (np.max(np.abs(x_adv - x))))
 			iter_ += 1
-			if iter_ % 200 == 1:
+			if iter_ % 10 == 1:
 				alpha_flow*= 1.2
 				alpha_inp *= 0.8
 				im0 = self.get_image(x_adv[0], flow[0])
@@ -328,12 +328,12 @@ class Solver(object):
 				voxel2obj('%s/voxel_%d.obj'%(directory, iter_), predictions)
 
 				print("IOU : %f \n" % iou)
-				print("Misclassified voxels : %d \n" % active_targets[index].sum())
-				print("Accuracy : %f \n" % (1 - (active_targets[index].sum()) / 32768.0))
+				print("Misclassified voxels : %d \n" % active_targets.sum())
+				print("Accuracy : %f \n" % (1 - (active_targets.sum()) / 32768.0))
 
 				log_file.write("IOU : %f \n" % iou)
-				log_file.write("Misclassified voxels : %d \n" % active_targets[index].sum())
-				log_file.write("Accuracy : %f \n" % (1 - (active_targets[index].sum()) / 32768.0))
+				log_file.write("Misclassified voxels : %d \n" % active_targets.sum())
+				log_file.write("Accuracy : %f \n" % (1 - (active_targets.sum()) / 32768.0))
 
 			results = output(x_adv, flow)
 			prediction = results[0]
