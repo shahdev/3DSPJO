@@ -327,13 +327,13 @@ class Solver(object):
 				print('savng prediction')
 				voxel2obj('%s/voxel_%d.obj'%(directory, iter_), predictions)
 
-                print("IOU : %f \n" % iou)
-                print("Misclassified voxels : %d \n" % active_targets[index].sum())
-                print("Accuracy : %f \n" % (1 - (active_targets[index].sum()) / 32768.0))
+				print("IOU : %f \n" % iou)
+				print("Misclassified voxels : %d \n" % active_targets[index].sum())
+				print("Accuracy : %f \n" % (1 - (active_targets[index].sum()) / 32768.0))
 
 				log_file.write("IOU : %f \n" % iou)
-                log_file.write("Misclassified voxels : %d \n" % active_targets[index].sum())
-                log_file.write("Accuracy : %f \n" % (1 - (active_targets[index].sum()) / 32768.0))
+				log_file.write("Misclassified voxels : %d \n" % active_targets[index].sum())
+				log_file.write("Accuracy : %f \n" % (1 - (active_targets[index].sum()) / 32768.0))
 
 			results = output(x_adv, flow)
 			prediction = results[0]
