@@ -312,7 +312,7 @@ class Solver(object):
 			print("flow data max min: %f, %f" % (np.max(flow), np.min(flow)))
 			print("noise perturbation max: %f" % (np.max(np.abs(x_adv - x))))
 			iter_ += 1
-			if iter_ % 10 == 1:
+			if iter_ % 200 == 199:
 				alpha_flow*= 1.2
 				alpha_inp *= 0.8
 				im0 = self.get_image(x_adv[0], flow[0])
