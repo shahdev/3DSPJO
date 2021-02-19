@@ -242,6 +242,8 @@ class Solver(object):
 		pgd_max = x + attack_epsilon
 		pgd_min = x - attack_epsilon
 
+		log_file = open(directory + "log.txt", "w")
+
 		y_val = target
 		target = target[0, :, 1, :, :] > cfg.TEST.VOXEL_THRESH
 		print('target shape: ', np.shape(target))
@@ -310,7 +312,7 @@ class Solver(object):
 			print("flow data max min: %f, %f" % (np.max(flow), np.min(flow)))
 			print("noise perturbation max: %f" % (np.max(np.abs(x_adv - x))))
 			iter_ += 1
-			if iter_ % 200 == 199:
+			if iter_ % 200 == 1:
 				alpha_flow*= 1.2
 				alpha_inp *= 0.8
 				im0 = self.get_image(x_adv[0], flow[0])
@@ -318,13 +320,20 @@ class Solver(object):
 				im2 = self.get_image(x_adv[2], flow[2])
 				ims = np.array([im0, im1, im2])
 				l2_loss = np.sqrt(np.sum(np.multiply(ims - x, ims - x)))
-				save_image(ims, directory + '/flow' + str(l2_loss) + '_' + str(iter_) + '.png')
-				np.save(directory + '/dag_attack' + str(iter_) + '.npy', x_adv)
-				np.save(directory + '/dag_attack_flow' + str(iter_) + '.npy', flow)
+				save_image(x_adv, '%s/pixel_%d.png'%(directory, iter_))
+				save_image(ims, '%s/spatial_pixel_%d.png'%(directory, iter_))
+				np.save('%s/pixel_%d.npy'%(directory, iter_), x_adv)
+				np.save('%s/flow_%d.npy'%(directory, iter_), flow)
 				print('savng prediction')
-				voxel2obj(directory + '/prediction' + '_targetsize:' + str(active_targets.sum()) + '_' + str(
-					active_targets.sum() / 32768) + '_iou:' + str(iou) + '_' +
-						  str(iter_) + '.obj', predictions)
+				voxel2obj('%s/voxel_%d.obj'%(directory, iter_), predictions)
+
+                print("IOU : %f \n" % iou)
+                print("Misclassified voxels : %d \n" % active_targets[index].sum())
+                print("Accuracy : %f \n" % (1 - (active_targets[index].sum()) / 32768.0))
+
+				log_file.write("IOU : %f \n" % iou)
+                log_file.write("Misclassified voxels : %d \n" % active_targets[index].sum())
+                log_file.write("Accuracy : %f \n" % (1 - (active_targets[index].sum()) / 32768.0))
 
 			results = output(x_adv, flow)
 			prediction = results[0]
@@ -335,6 +344,8 @@ class Solver(object):
 			mask = np.asarray([mask] * cfg.CONST.BATCH_SIZE)
 			mask = np.asarray([mask] * 2)
 			mask = np.transpose(mask, (1, 2, 0, 3, 4)).astype(theano.config.floatX)
+
+		log_file.close()
 		return prediction, None
 
 	def test_output(self, x, y=None, mask=None, flow=None):
