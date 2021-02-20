@@ -264,9 +264,9 @@ class Solver(object):
 		background_mask = 1 - get_foreground(x)
 
 		while active_targets.sum() > 0 and iter_ < max_iters:
-			print('active target length: ', active_targets.sum())
+			print('active target length: ', active_targets.sum(), flush=True)
 			iou = (predictions & target).sum() / (predictions | target).sum()
-			print('iou: ', iou)
+			print('iou: ', iou, flush=True)
 			previous_targets = active_targets.sum()
 			print('Iteration: ', iter_)
 			grad = grad_wrt_inp(x_adv, flow, y_val, mask, tau)
@@ -303,14 +303,15 @@ class Solver(object):
 				if not background_attack:
 					x_adv = np.float32(foreground_mask * x_adv + (1 - foreground_mask) * x)
 
-			print("losses : ", grad[2])
-			print("flow loss: ", grad[3])
+			print("losses : ", grad[2], flush=True)
+			print("flow loss: ", grad[3], flush=True)
 
 			reg_term = grad[4]
 			# print('shape reg: ', np.shape(reg_term))
 			# print('reg term: ', reg_term)
-			print("flow data max min: %f, %f" % (np.max(flow), np.min(flow)))
-			print("noise perturbation max: %f" % (np.max(np.abs(x_adv - x))))
+			print("flow data max min: %f, %f" % (np.max(flow), np.min(flow)), flush=True)
+			print("l2 noise perturbation: %f" % (np.sqrt(np.abs(x_adv - x)*np.abs(x_adv-x))), flush=True)
+			
 			iter_ += 1
 			if iter_ % 200 == 199:
 				alpha_flow*= 1.2
