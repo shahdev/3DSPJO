@@ -7,6 +7,7 @@ Reconstruction, ECCV 2016
 
 import os
 import sys
+os.environ["THEANO_FLAGS"] = "device=cpu, floatX=float32, base_compiledir=dag, allow_gc=True, optimizer=fast_compile"
 import theano
 if (sys.version_info < (3, 0)):
     raise Exception("Please follow the installation instruction on 'https://github.com/chrischoy/3D-R2N2'")
