@@ -7,21 +7,13 @@ Reconstruction, ECCV 2016
 
 import os
 import sys
-os.environ["THEANO_FLAGS"] = "device=cpu, floatX=float32, base_compiledir=dag, allow_gc=True, optimizer=fast_compile"
-import theano
-if (sys.version_info < (3, 0)):
-    raise Exception("Please follow the installation instruction on 'https://github.com/chrischoy/3D-R2N2'")
-
+import argparse
+from lib.config import cfg, cfg_from_list
 import shutil
 import numpy as np
 from subprocess import call
     
 from PIL import Image
-from models import load_model
-from lib.config import cfg, cfg_from_list
-from lib.solver import Solver
-from lib.voxel import voxel2obj
-import argparse
 
 DEFAULT_WEIGHTS = 'output/ResidualGRUNet/default_model/weights.npy'
 
@@ -88,7 +80,7 @@ def main(args):
         os.makedirs('targets')
     voxel2obj('targets/' + args.target + '.obj', target[0, :, 1, :, :] > cfg.TEST.VOXEL_THRESH)
 
-    voxel_prediction, _ = solver.spatial_dag_attack(x_adv, flow, args.save_dir, target=target, max_iters=1000, attack_epsilon=args.attack_epsilon/255, tau=args.tau, 
+    voxel_prediction, _ = solver.spatial_dag_attack(x_adv, flow, args.save_dir, target=target, max_iters=2000, attack_epsilon=args.attack_epsilon/255, tau=args.tau, 
         alpha_flow=args.alpha_flow, alpha_inp=args.alpha_inp, source_img=source_type, target_img=args.target, 
         background_attack=background_attack, weight=args.border_weight, 
         dag_only=args.dag_only, spatial_only=args.spatial_only)
@@ -114,4 +106,16 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     cfg_from_list(['CONST.TV_LOSS_WEIGHT', args.tv_weight])
+
+
+    os.environ["THEANO_FLAGS"] = "device=cpu, floatX=float32, base_compiledir=%s, allow_gc=True, optimizer=fast_compile"%args.save_dir
+    import theano
+    if (sys.version_info < (3, 0)):
+        raise Exception("Please follow the installation instruction on 'https://github.com/chrischoy/3D-R2N2'")
+
+
+    from models import load_model
+    from lib.solver import Solver
+    from lib.voxel import voxel2obj
+
     main(args)

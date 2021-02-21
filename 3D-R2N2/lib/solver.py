@@ -242,7 +242,7 @@ class Solver(object):
 		pgd_max = x + attack_epsilon
 		pgd_min = x - attack_epsilon
 
-		log_file = open(directory + "log.txt", "w")
+		log_file = open(directory + "/log.txt", "w")
 
 		y_val = target
 		target = target[0, :, 1, :, :] > cfg.TEST.VOXEL_THRESH
@@ -310,7 +310,7 @@ class Solver(object):
 			# print('shape reg: ', np.shape(reg_term))
 			# print('reg term: ', reg_term)
 			print("flow data max min: %f, %f" % (np.max(flow), np.min(flow)), flush=True)
-			print("l2 noise perturbation: %f" % (np.sqrt(np.abs(x_adv - x)*np.abs(x_adv-x))), flush=True)
+			print("l2 noise perturbation: %f" % (np.sqrt(np.sum(np.abs(x_adv - x)*np.abs(x_adv-x)))), flush=True)
 			
 			iter_ += 1
 			if iter_ % 200 == 199:
