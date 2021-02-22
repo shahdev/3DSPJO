@@ -316,6 +316,7 @@ class Solver(object):
 			if iter_ % 200 == 199:
 				alpha_flow*= 1.2
 				alpha_inp *= 0.8
+				print("Alpha values", alpha_inp, alpha_flow)
 				im0 = self.get_image(x_adv[0], flow[0])
 				im1 = self.get_image(x_adv[1], flow[1])
 				im2 = self.get_image(x_adv[2], flow[2])

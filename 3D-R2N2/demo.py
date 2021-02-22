@@ -80,7 +80,7 @@ def main(args):
         os.makedirs('targets')
     voxel2obj('targets/' + args.target + '.obj', target[0, :, 1, :, :] > cfg.TEST.VOXEL_THRESH)
 
-    voxel_prediction, _ = solver.spatial_dag_attack(x_adv, flow, args.save_dir, target=target, max_iters=2000, attack_epsilon=args.attack_epsilon/255, tau=args.tau, 
+    voxel_prediction, _ = solver.spatial_dag_attack(x_adv, flow, args.save_dir, target=target, max_iters=4000, attack_epsilon=args.attack_epsilon/255, tau=args.tau, 
         alpha_flow=args.alpha_flow, alpha_inp=args.alpha_inp, source_img=source_type, target_img=args.target, 
         background_attack=background_attack, weight=args.border_weight, 
         dag_only=args.dag_only, spatial_only=args.spatial_only)
