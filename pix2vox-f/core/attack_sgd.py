@@ -19,7 +19,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from torch.optim import SGD
-
+torch.manual_seed(0)
 def load_images(obj):
     ims = []
     for i in range(3):
@@ -321,7 +321,6 @@ def test_net(cfg,
     pgd_min = clean_imgs - attack_epsilon
     f_max = torch.zeros(f.shape, device=device) + 0.15
     f_min = torch.zeros(f.shape, device=device) - 0.15
-    spatial_counter = 0
 
     if args.attack_type == 'spatial_dag':
         optim_ = SGD([{'params': [source_imgs], 'lr': alpha_inp}, {'params': [f], 'lr': alpha_flow}], momentum=0.9)

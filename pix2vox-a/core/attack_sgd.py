@@ -19,7 +19,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from torch.optim import SGD
-
+torch.manual_seed(0)
 def load_images(obj):
     ims = []
     for i in range(3):
