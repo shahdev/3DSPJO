@@ -2,24 +2,19 @@
 #
 # Developed by Haozhe Xie <cshzxie@gmail.com>
 
-import json
 import numpy as np
 import os
 import torch
 import torch.backends.cudnn
 import torch.utils.data
 from datetime import datetime as dt
-from PIL import Image
 from models.encoder import Encoder
 from models.decoder import Decoder
-from models.refiner import Refiner
 from models.merger import Merger
-
+from models.refiner import Refiner
 from torch.autograd import Variable
 from PIL import Image
 import matplotlib.pyplot as plt
-import scipy.misc
-import sys
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -191,8 +186,8 @@ def test_net(cfg,
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(device)
     source_imgs = []
-    sources = sources[:10]
-    targets = targets[:10]
+    #sources = sources[:10]
+    #targets = targets[:10]
 
     # alpha_inp = 0.0020
     alpha_inp = 0.010
@@ -229,8 +224,8 @@ def test_net(cfg,
 
     for source_ in sources:
         demo_imgs = load_images(source_)
-        demo_imgs -= cfg.DATASET.MEAN[0]
-        demo_imgs /= cfg.DATASET.STD[0]
+        # demo_imgs -= cfg.DATASET.MEAN[0]
+        # demo_imgs /= cfg.DATASET.STD[0]
         demo_imgs = np.transpose(demo_imgs, (1, 0, 2, 3, 4))
         source_imgs.append(demo_imgs)
 
@@ -267,6 +262,7 @@ def test_net(cfg,
 
         if cfg.NETWORK.USE_REFINER:
             refiner.load_state_dict(checkpoint['refiner_state_dict'])
+
         if cfg.NETWORK.USE_MERGER:
             merger.load_state_dict(checkpoint['merger_state_dict'])
 
@@ -315,7 +311,6 @@ def test_net(cfg,
     # Test the encoder, decoder and merger
 
     grad_inp_t = torch.zeros(source_imgs.shape, device=device)
-
     source_imgs_collate = source_imgs.view(source_imgs.shape[0] * source_imgs.shape[1], source_imgs.shape[2],
                                            source_imgs.shape[3], source_imgs.shape[4])
 
@@ -337,7 +332,6 @@ def test_net(cfg,
     pgd_min = clean_imgs - attack_epsilon
     f_max = torch.zeros(f.shape, device=device) + 0.15
     f_min = torch.zeros(f.shape, device=device) - 0.15
-    spatial_counter = 0
 
     if args.attack_type == 'spatial_dag':
         optim_ = SGD([{'params': [source_imgs], 'lr': alpha_inp}, {'params': [f], 'lr': alpha_flow}], momentum=0.9)
@@ -356,14 +350,16 @@ def test_net(cfg,
             # Spatial transform => given image and optical flow, gives the spatially transformed image
             grid_new = grid + f
             grid_new = grid_new.clamp(min=-1, max=1)
+
             source_imgs_collate = source_imgs.view(source_imgs.shape[0] * source_imgs.shape[1], source_imgs.shape[2],
                                                    source_imgs.shape[3], source_imgs.shape[4])
             x_new = F.grid_sample(source_imgs_collate, grid_new, mode='bilinear', align_corners=True)
             x_new = x_new.view(source_imgs.shape[0], source_imgs.shape[1], source_imgs.shape[2],
                                source_imgs.shape[3], source_imgs.shape[4])
+            normalized_imgs_inp = (x_new - cfg.DATASET.MEAN[0]) / cfg.DATASET.STD[0]
 
-            #Forward pass through encoder,decoder,merger, refiner
-            image_features = encoder(x_new)
+            # Forward pass through encoder, decoder, merger, refiner
+            image_features = encoder(normalized_imgs_inp)
 
             # image_features = encoder(rendering_images)
             raw_features, generated_volume = decoder(image_features)
@@ -377,9 +373,8 @@ def test_net(cfg,
             active_targets = _volume ^ _target
             # print('iter: ', iter_, 'active target length: ', active_targets.sum())
             mask = active_targets * 1.0 * boundary_mask
-            # encoder_loss = bce_loss(generated_volume * mask, ground_truth_volume * mask) * 10 * weight
 
-            #Optimization losses : encoder_loss, refiner_loss
+            # Optimization losses : encoder_loss, refiner_loss
             encoder_loss = torch.mean(-(
                     ground_truth_volume * torch.log(generated_volume + 1e-9) + (1 - ground_truth_volume) * torch.log(
                 1 - generated_volume + 1e-9)) * mask) * 10
@@ -390,23 +385,20 @@ def test_net(cfg,
 
             _volume = torch.ge(generated_volume, threshold)
             active_targets = _volume ^ _target
-            # print('iter: ', iter_, 'active target length: ', active_targets.sum())
             mask = active_targets * 1.0 * boundary_mask
-            # refiner_loss = bce_loss(generated_volume * mask, ground_truth_volume * mask) * 10 * weight
             refiner_loss = torch.mean(-(
                     ground_truth_volume * torch.log(generated_volume + 1e-9) + (1 - ground_truth_volume) * torch.log(
                 1 - generated_volume + 1e-9)) * mask) * 10
             l2_loss = mse_loss(clean_imgs, source_imgs)
             linf_loss = torch.max(clean_imgs - source_imgs)
             flow_regularization_loss = loss_flow(f)
-            # print(iter_, active_targets.data.sum(), encoder_loss.data, refiner_loss.data, l2_loss.data, '{0:.10f}'.format(flow_regularization_loss.data), linf_loss.data, flush=True)
-            #Eventual optimization loss function
+            # Eventual optimization loss function
             total_loss = 0.5 * (encoder_loss + refiner_loss) + tau * flow_regularization_loss
 
         total_loss.backward()
         optim_.step()
 
-        source_imgs.data.clamp(-1.0, 1.0)
+        source_imgs.data.clamp(0, 1.0)
         source_imgs.data = torch.clamp(source_imgs.data - pgd_max.data, max=0) + pgd_max.data
         source_imgs.data = torch.clamp(source_imgs.data - pgd_min.data, min=0) + pgd_min.data
         f.data = torch.clamp(f.data-f_max.data, max=0) + f_max.data
@@ -435,12 +427,12 @@ def test_net(cfg,
             for param in optim_.param_groups:
                 print("PARAM LR", param['lr'])
             x_adv = source_imgs.data.cpu().numpy()
-            x_adv *= cfg.DATASET.STD[0]
-            x_adv += cfg.DATASET.MEAN[0]
+            # x_adv *= cfg.DATASET.STD[0]
+            # x_adv += cfg.DATASET.MEAN[0]
 
             x_save = x_new.data.cpu().numpy()
-            x_save *= cfg.DATASET.STD[0]
-            x_save += cfg.DATASET.MEAN[0]
+            # x_save *= cfg.DATASET.STD[0]
+            # x_save += cfg.DATASET.MEAN[0]
 
             for index in range(len(sources)):
                 # directory = args.attack_type + '/' + sources[index] + '_' + targets[index] + '/'
@@ -537,3 +529,4 @@ def write_obj(filename, verts, faces):
 def voxel2obj(filename, pred, surface_view=True):
     verts, faces = voxel2mesh(pred, surface_view)
     write_obj(filename, verts, faces)
+
