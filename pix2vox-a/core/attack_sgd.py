@@ -19,7 +19,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from torch.optim import SGD
-os.environ['PYTHONHASHSEED']=0
+os.environ['PYTHONHASHSEED']='0'
 # 2. Set `python` built-in pseudo-random generator at a fixed value
 import random
 random.seed(0)
