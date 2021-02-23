@@ -20,15 +20,15 @@ import torch.nn.functional as F
 
 from torch.optim import SGD
 
-os.environ['PYTHONHASHSEED']=str(seed_value)
+os.environ['PYTHONHASHSEED']=0
 # 2. Set `python` built-in pseudo-random generator at a fixed value
 import random
-random.seed(seed_value)
+random.seed(0)
 # 3. Set `numpy` pseudo-random generator at a fixed value
 import numpy as np
-np.random.seed(seed_value)
+np.random.seed(0)
 # 4. Set `pytorch` pseudo-random generator at a fixed value
-torch.manual_seed(seed_value)
+torch.manual_seed(0)
 
 def load_images(obj):
     ims = []
