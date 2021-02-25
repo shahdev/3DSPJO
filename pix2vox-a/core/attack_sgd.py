@@ -315,7 +315,11 @@ def test_net(cfg,
     for index in range(ground_truth_volume.shape[0]):
         boundary_mask.append(calculate_border_mask(_target[index].cpu().detach().numpy(), weight))
     boundary_mask = torch.tensor(boundary_mask, device=device)
-    # boundary_mask = torch.tensor(boundary_mask, device=device)
+
+    target_boundary_mask = []
+    for index in range(ground_truth_volume.shape[0]):
+        target_boundary_mask.append(calculate_external_voxels_mask(_target[index].cpu().detach().numpy()))
+    target_boundary_mask = torch.tensor(target_boundary_mask, device=device)
 
     # Test the encoder, decoder and merger
 
@@ -380,6 +384,8 @@ def test_net(cfg,
 
             _volume = torch.ge(generated_volume, threshold)
             active_targets = _volume ^ _target
+            active_3D_targets = (_volume & target_boundary_mask) ^ (_target & target_boundary_mask)            
+
             # print('iter: ', iter_, 'active target length: ', active_targets.sum())
             mask = active_targets * 1.0 * boundary_mask
 
@@ -412,7 +418,7 @@ def test_net(cfg,
         source_imgs.data = torch.clamp(source_imgs.data - pgd_min.data, min=0) + pgd_min.data
         f.data = torch.clamp(f.data-f_max.data, max=0) + f_max.data
         f.data = torch.clamp(f.data - f_min.data, min=0) + f_min.data
-        print(iter_, active_targets.data.sum(), f.data.max(),
+        print(iter_, active_targets.data.sum(), active_3D_targets.sum(), f.data.max(),
               f.data.min(), flush=True)
 
         if args.foreground_only == 1:
@@ -460,10 +466,10 @@ def test_net(cfg,
                 voxel2obj(directory + 'prediction_%d.obj' % iter_, np_obj)
 
                 np_obj_s = _target[index].data.cpu().data.numpy()
+                boundary_mask_obj = target_boundary_mask[index].data.cpu().data.numpy()
                 iou = (np_obj & np_obj_s).sum() / (np_obj | np_obj_s).sum()
-                target_boundary_mask = calculate_external_voxels_mask(_target[index].cpu().detach().numpy())
-                iou_3D = (np_obj & target_boundary_mask & np_obj_s).sum() / (
-                        (np_obj | np_obj_s) & target_boundary_mask).sum()
+                iou_3D = (np_obj & boundary_mask_obj & np_obj_s).sum() / (
+                        (np_obj | np_obj_s) & boundary_mask_obj).sum()
 
                 l2_source_target = mse_loss(clean_imgs[index], source_imgs[index])
                 print("SOURCE : %s, TARGET: %s" % (sources[index], targets[index]))
