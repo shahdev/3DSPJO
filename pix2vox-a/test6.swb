@@ -1,0 +1,10 @@
+#!/bin/bash
+#SBATCH --job-name="demo"
+#SBATCH --output="demo.%j.%N.out"
+#SBATCH --error="demo.%j.%N.err"
+#SBATCH --partition=gpux1
+#SBATCH --time=20
+srun hostname
+module load wmlce
+conda activate pix2vox_env_v1
+sh test6.sh
